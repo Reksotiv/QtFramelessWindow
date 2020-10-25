@@ -36,30 +36,35 @@ void TitleBar::mousePressEvent(QMouseEvent *event)
     Q_UNUSED(event)
     press_pos = event->pos();
     mouse_pressed = true;
-    //qDebug()<<press_pos;
-//    qDebug()<<myscreen->isMaximized();
+
+    QWidget::mousePressEvent(event); // ?
 }
 
 void TitleBar::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
     mouse_pressed = false;
-    //is_maximized = false;
-}
 
+    QWidget::mouseReleaseEvent(event); // ?
+}
+#include <QElapsedTimer>
 void TitleBar::mouseMoveEvent(QMouseEvent *event)
 {
-    //drag_pos = event->pos();
     if (mouse_pressed)
     {
-        if (frameless_window->isMaximized()){
+        QCursor cur = cursor(); // faster
+        if (cur == Qt::SizeFDiagCursor || cur == Qt::SizeBDiagCursor || // тупо?
+                cur == Qt::SizeHorCursor || cur == Qt::SizeVerCursor){
+            return;
+        }
+        else if (frameless_window->isMaximized()){
             TryMoveWidget(event);
         } else {
             QPoint diff = event->pos() - press_pos;
             window()->move(window()->pos() + diff);
         }
     }
-
+    ////QWidget::mouseMoveEvent(event);
 }
 
 void TitleBar::TryMoveWidget(QMouseEvent *event)
@@ -67,8 +72,8 @@ void TitleBar::TryMoveWidget(QMouseEvent *event)
 //    QPoint distance = event->globalPos().manhattanLength();
 //    int length = distance.manhattanLength();
 
-    if(event->globalPos().manhattanLength() - press_pos.manhattanLength() > 10 ||
-       event->globalPos().manhattanLength() - press_pos.manhattanLength() < -10)
+    if(event->globalPos().manhattanLength() - press_pos.manhattanLength() > 5 ||
+       event->globalPos().manhattanLength() - press_pos.manhattanLength() < -5)
     {
         QRect rect = frameless_window->normalGeometry();
         int dest_x = press_pos.x() * rect.width() / frameless_window->geometry().width();
