@@ -11,7 +11,7 @@ public:
     explicit TitleBar(QWidget *parent = nullptr);
 
 signals:
-//    void doubleClicked();
+    void doubleClicked();
 //    bool isWindowMaximized();
 
 protected:

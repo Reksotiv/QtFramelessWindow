@@ -13,6 +13,8 @@ int main(int argc, char *argv[])
 
     MainWindow* w = new MainWindow(&frameless); // ??? parent
     frameless.SetContent(w);
+    frameless.SetWindowTitle("Frameless Window");
+    frameless.SetWindowIcon(QIcon(":/Images/icon-32.png"));
 
     frameless.show();
     return a.exec();

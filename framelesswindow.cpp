@@ -5,19 +5,34 @@
 #include <QPainter>
 #include <QStyleOption>
 #include <QMouseEvent>
+#include <QGraphicsDropShadowEffect>
 
 #include <QDebug>
+
+//#include <windows.h>
+//#include <WinUser.h>
+//#include <windowsx.h>
+//#include <dwmapi.h>
+//#include <objidl.h>
+//#include <gdiplus.h>
+//#include <GdiPlusColor.h>
+//#pragma comment (lib,"Dwmapi.lib")
+//const MARGINS margins = {1,1,1,1};
+////HWND hwnd = (HWND)QWidget::winId();
+//DwmExtendFrameIntoClientArea(HWND(this->winId()), &margins);
 
 FramelessWindow::FramelessWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::FramelessWindow)
 {
-    setWindowFlags(Qt::FramelessWindowHint);
-    //setAttribute(Qt::WA_NoSystemBackground, true);
-    //setAttribute(Qt::WA_TranslucentBackground);
-    ui->setupUi(this);
+    setWindowFlags(windowFlags() | Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+#if defined(Q_OS_WIN)
+  setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
+#endif
+    setAttribute(Qt::WA_NoSystemBackground, true);
+    setAttribute(Qt::WA_TranslucentBackground);
 
-    setMouseTracking(true);
+    ui->setupUi(this);
 
 //    press_to_right_border = 0;
 //    press_to_bottom_border = 0;
@@ -27,6 +42,9 @@ FramelessWindow::FramelessWindow(QWidget *parent) :
     top_drag = false;
     bottom_drag = false;
 
+    setMouseTracking(true);
+
+    SetWindowShadow();
 
     QApplication::instance()->installEventFilter(this);
 }
@@ -36,19 +54,48 @@ FramelessWindow::~FramelessWindow()
     delete ui;
 }
 
+void FramelessWindow::SetWindowShadow()
+{
+    DeleteGraphicEffect();
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(10);
+    //shadow->setColor(palette().color(QPalette::Dark));
+    shadow->setOffset(0);
+    ui->widget_WindowFrame->setGraphicsEffect(shadow);
+}
+
+void FramelessWindow::DeleteGraphicEffect()
+{
+    QGraphicsEffect *cur_shadow = ui->widget_WindowFrame->graphicsEffect();
+    if (cur_shadow){
+        delete cur_shadow;
+    }
+    ui->widget_WindowFrame->setGraphicsEffect(nullptr);
+}
+
 
 void FramelessWindow::on_pushButton_Minimize_clicked()
 {
+    DeleteGraphicEffect();
     setWindowState(Qt::WindowMinimized);
 }
 
 void FramelessWindow::on_pushButton_Maximize_clicked()
 {
     if (this->isMaximized()){
+        layout()->setMargin(5);
         setWindowState(Qt::WindowNoState);
+        SetWindowShadow();
     } else {
+        layout()->setMargin(0);
+        DeleteGraphicEffect();
         setWindowState(Qt::WindowMaximized);
     }
+}
+
+void FramelessWindow::on_widget_TitleBar_doubleClicked()
+{
+    on_pushButton_Maximize_clicked();
 }
 
 void FramelessWindow::on_pushButton_Exit_clicked()
@@ -60,6 +107,16 @@ void FramelessWindow::on_pushButton_Exit_clicked()
 void FramelessWindow::SetContent(QWidget* widget)
 {
     ui->layoutV_Content->addWidget(widget);
+}
+
+void FramelessWindow::SetWindowTitle(const QString &title)
+{
+    ui->label_WindowTitle->setText(title);
+}
+
+void FramelessWindow::SetWindowIcon(const QIcon &icon)
+{
+    ui->label_WindowIcon->setPixmap(icon.pixmap(16, 16));
 }
 
 
@@ -84,6 +141,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
         setCursor(Qt::SizeFDiagCursor);
         right_drag = true;
         bottom_drag = true;
+
         left_drag = false;
         top_drag = false;
     }
@@ -91,6 +149,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
         setCursor(Qt::SizeBDiagCursor);
         left_drag = true;
         bottom_drag = true;
+
         right_drag = false;
         top_drag = false;
     }
@@ -98,6 +157,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
         setCursor(Qt::SizeBDiagCursor);
         right_drag = true;
         top_drag = true;
+
         left_drag = false;
         bottom_drag = false;
     }
@@ -105,6 +165,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
         setCursor(Qt::SizeFDiagCursor);
         left_drag = true;
         top_drag = true;
+
         right_drag = false;
         bottom_drag = false;
     }
@@ -118,6 +179,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
     else if (RightBorderHit(mouse_global_pos)){
         setCursor(Qt::SizeHorCursor);
         right_drag = true;
+
         left_drag = false;
         top_drag = false;
         bottom_drag = false;
@@ -125,6 +187,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
     else if (TopBorderHit(mouse_global_pos)){
         setCursor(Qt::SizeVerCursor);
         top_drag = true;
+
         right_drag = false;
         left_drag = false;
         bottom_drag = false;
@@ -132,6 +195,7 @@ void FramelessWindow::BorderCursorCheck(const QPoint &mouse_global_pos)
     else if (BottomBorderHit(mouse_global_pos)){
         setCursor(Qt::SizeVerCursor);
         bottom_drag = true;
+
         right_drag = false;
         left_drag = false;
         top_drag = false;
@@ -161,26 +225,39 @@ void FramelessWindow::BorderDragging(const QPoint &mouse_global_pos)
     // left-bottom
     else if (left_drag && bottom_drag){
         QRect rect = this->geometry();
-        this->setGeometry(mouse_global_pos.x() - press_pos.x(),
-                          rect.y(),
-                          rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x(),
-                          mouse_global_pos.y() - rect.y() + press_to_bottom_border);
+        int tmp_width = rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x();
+
+        if (tmp_width >= this->minimumWidth()){
+            this->setGeometry(mouse_global_pos.x() - press_pos.x(),
+                              rect.y(),
+                              rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x(),
+                              mouse_global_pos.y() - rect.y() + press_to_bottom_border);
+        }
     }
     // right-top
     else if (right_drag && top_drag){
         QRect rect = this->geometry();
-        this->setGeometry(rect.x(),
-                          mouse_global_pos.y() - press_pos.y(),
-                          mouse_global_pos.x() - rect.x() + press_to_right_border,
-                          rect.height() + rect.y() - mouse_global_pos.y() + press_pos.y());
+        int tmp_height = rect.height() + rect.y() - mouse_global_pos.y() + press_pos.y();
+
+        if (tmp_height >= this->minimumHeight()){
+            this->setGeometry(rect.x(),
+                              mouse_global_pos.y() - press_pos.y(),
+                              mouse_global_pos.x() - rect.x() + press_to_right_border,
+                              tmp_height);
+        }
     }
     // left-top
     else if (left_drag && top_drag){
         QRect rect = this->geometry();
-        this->setGeometry(mouse_global_pos.x() - press_pos.x(),
-                          mouse_global_pos.y() - press_pos.y(),
-                          rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x(),
-                          rect.height() + rect.y() - mouse_global_pos.y() + press_pos.y());
+        int tmp_width = rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x();
+        int tmp_height = rect.height() + rect.y() - mouse_global_pos.y() + press_pos.y();
+
+        if (tmp_width >= this->minimumWidth() && tmp_height >= this->minimumHeight()){
+            this->setGeometry(mouse_global_pos.x() - press_pos.x(),
+                              mouse_global_pos.y() - press_pos.y(),
+                              tmp_width,
+                              tmp_height);
+        }
     }
     // right
     else if (right_drag){
@@ -193,10 +270,14 @@ void FramelessWindow::BorderDragging(const QPoint &mouse_global_pos)
     // left
     else if (left_drag){
         QRect rect = this->geometry();
-        this->setGeometry(mouse_global_pos.x() - press_pos.x(),
-                          rect.y(),
-                          rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x(),
-                          rect.height());
+        int tmp_width = rect.width() + rect.x() - mouse_global_pos.x() + press_pos.x();
+
+        if (tmp_width >= this->minimumWidth()){
+            this->setGeometry(mouse_global_pos.x() - press_pos.x(),
+                              rect.y(),
+                              tmp_width,
+                              rect.height());
+        }
     }
     // bottom
     else if (bottom_drag){
@@ -209,10 +290,14 @@ void FramelessWindow::BorderDragging(const QPoint &mouse_global_pos)
     // top
     else if (top_drag){
         QRect rect = this->geometry();
-        this->setGeometry(rect.x(),
-                          mouse_global_pos.y() - press_pos.y(),
-                          rect.width(),
-                          rect.height() + rect.y() - mouse_global_pos.y() + press_pos.y());
+        int tmp_height = rect.height() + rect.y() - mouse_global_pos.y() + press_pos.y();
+
+         if (tmp_height >= this->minimumHeight()){
+             this->setGeometry(rect.x(),
+                               mouse_global_pos.y() - press_pos.y(),
+                               rect.width(),
+                               tmp_height);
+         }
     }
 }
 
@@ -263,7 +348,7 @@ void FramelessWindow::mousePressEvent(QMouseEvent *event)
 
 //    press_to_right_border = press_geometry.width() - press_pos.x();
 //    press_to_bottom_border = press_geometry.height() - press_pos.y();
-    qDebug()<<"click ###################";
+
 }
 
 void FramelessWindow::mouseReleaseEvent(QMouseEvent *event)

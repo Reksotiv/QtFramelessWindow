@@ -16,13 +16,15 @@ public:
     ~FramelessWindow();
 
     void SetContent(QWidget*);
+    void SetWindowTitle(const QString &title);
+    void SetWindowIcon(const QIcon &icon);
 
 private slots:
     void on_pushButton_Minimize_clicked();
     void on_pushButton_Maximize_clicked();
     void on_pushButton_Exit_clicked();
 
-//    void on_widget_TitleBar_doubleClicked();
+    void on_widget_TitleBar_doubleClicked();
 
 protected:
     virtual void mousePressEvent(QMouseEvent *event);
@@ -44,6 +46,9 @@ private:
 
     void BorderCursorCheck(const QPoint &pos);
     void BorderDragging(const QPoint &pos);
+
+    void SetWindowShadow();
+    void DeleteGraphicEffect();
 
     QPoint press_pos;
     QRect press_geometry;

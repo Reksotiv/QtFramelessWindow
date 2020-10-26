@@ -23,12 +23,12 @@ TitleBar::TitleBar(QWidget *parent) : QWidget(parent)
 void TitleBar::mouseDoubleClickEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
-    //emit doubleClicked();
-    if (frameless_window->isMaximized()){
-        frameless_window->setWindowState(Qt::WindowNoState);
-    } else {
-        frameless_window->setWindowState(Qt::WindowMaximized);
-    }
+    emit doubleClicked();
+//    if (frameless_window->isMaximized()){
+//        frameless_window->setWindowState(Qt::WindowNoState);
+//    } else {
+//        frameless_window->setWindowState(Qt::WindowMaximized);
+//    }
 }
 
 void TitleBar::mousePressEvent(QMouseEvent *event)
@@ -47,7 +47,7 @@ void TitleBar::mouseReleaseEvent(QMouseEvent *event)
 
     QWidget::mouseReleaseEvent(event); // ?
 }
-#include <QElapsedTimer>
+
 void TitleBar::mouseMoveEvent(QMouseEvent *event)
 {
     if (mouse_pressed)

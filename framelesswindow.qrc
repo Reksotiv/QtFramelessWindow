@@ -3,5 +3,9 @@
         <file>Images/minimize.png</file>
         <file>Images/exit.png</file>
         <file>Images/maximize.png</file>
+        <file>Images/icon-32.png</file>
+        <file>Images/exit_hover.png</file>
+        <file>Images/maximize_hover.png</file>
+        <file>Images/minimize_hover.png</file>
     </qresource>
 </RCC>
