@@ -34,6 +34,8 @@ protected:
 
     virtual void MouseBorderCheck(QMouseEvent *event);
 
+    virtual void changeEvent(QEvent *event);
+
 
 private:
     Ui::FramelessWindow *ui;

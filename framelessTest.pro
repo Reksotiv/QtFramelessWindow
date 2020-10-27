@@ -29,4 +29,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    framelesswindow.qrc
+    framelesswindow.qrc \
+    styles/qdarkstyle/style.qrc \
+    styles/white/qss.qrc

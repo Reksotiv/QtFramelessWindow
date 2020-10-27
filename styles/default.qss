@@ -1,0 +1,15 @@
+/* CustomWidgets ----------------------------------------------------------------
+background-color: rgb(49, 54, 59);#31363b
+--------------------------------------------------------------------------- */
+#widget_TitleBar
+{
+background-color: #31363b;
+}
+#label_WindowTitle
+{
+    background-color: #31363b;
+}
+#label_WindowTitle
+{
+color: #b9bbbe;
+}

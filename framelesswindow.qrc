@@ -7,5 +7,8 @@
         <file>Images/exit_hover.png</file>
         <file>Images/maximize_hover.png</file>
         <file>Images/minimize_hover.png</file>
+        <file>styles/default.qss</file>
+        <file>Images/exit_ico.png</file>
+        <file>Images/restore.png</file>
     </qresource>
 </RCC>

@@ -341,9 +341,11 @@ bool FramelessWindow::BottomBorderHit(const QPoint &pos, int additional_size) co
 void FramelessWindow::mousePressEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
-    mouse_pressed = true;
-    press_pos = event->pos();
-    press_geometry = this->geometry();
+    if (event->buttons() & Qt::LeftButton){
+        mouse_pressed = true;
+        press_pos = event->pos();
+        press_geometry = this->geometry();
+    }
 
 
 //    press_to_right_border = press_geometry.width() - press_pos.x();
@@ -354,7 +356,33 @@ void FramelessWindow::mousePressEvent(QMouseEvent *event)
 void FramelessWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
-    mouse_pressed = false;
+    //if (event->buttons() & Qt::LeftButton){
+        mouse_pressed = false;
+    //}
+}
+
+void FramelessWindow::changeEvent(QEvent *event)
+{
+    if( event->type() == QEvent::WindowStateChange )
+        {
+            QWindowStateChangeEvent* state_event = static_cast< QWindowStateChangeEvent* >(event);
+
+            if (state_event->oldState() & Qt::WindowMinimized){
+//                qDebug() << "Window restored (to normal or maximized state)!";
+                layout()->setMargin(5);
+                SetWindowShadow();
+            }
+//            else if (state_event->oldState() == Qt::WindowMaximized && this->windowState() == Qt::WindowNoState){
+//                layout()->setMargin(5);
+//                SetWindowShadow();
+//            }
+//            else if (state_event->oldState() == Qt::WindowNoState && this->windowState() == Qt::WindowMaximized)
+//            {
+//                qDebug() << "Window Maximized!";
+//                layout()->setMargin(0);
+//                DeleteGraphicEffect();
+//            }
+        }
 }
 
 bool FramelessWindow::eventFilter(QObject *obj, QEvent *event)
