@@ -283,16 +283,17 @@ void TitleBar::mouseMoveEvent(QMouseEvent *event)
 void TitleBar::tryMoveWidget(QMouseEvent *event)
 {
     // немного неправильно вычисляется Y
-    if(event->globalPos().manhattanLength() - m_pressPos.manhattanLength() > 5 ||
-       event->globalPos().manhattanLength() - m_pressPos.manhattanLength() < -5)
+    if(event->globalPos().manhattanLength() - m_pressPos.manhattanLength() > 3 ||
+       event->globalPos().manhattanLength() - m_pressPos.manhattanLength() < -3)
     {
         QRect rect = m_parent->normalGeometry();
         int dest_x = m_pressPos.x() * rect.width() / m_parent->geometry().width();
         int dest_y = m_pressPos.y();
         rect.moveTopLeft(event->globalPos() - QPoint(dest_x, dest_y));
 
-        m_parent->showNormal();
+        //m_parent->showNormal();
         //m_parent->setGeometry(rect);
+        on_pushButton_Maximize_clicked();
 
         m_pressPos = QPoint(dest_x, dest_y);
     }
