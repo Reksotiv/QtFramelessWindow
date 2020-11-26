@@ -107,6 +107,7 @@ void FramelessWindow::widgetFlagsToTitle(QWidget* widget)
     Qt::WindowFlags type = (widget->windowFlags() & Qt::WindowType_Mask);
     if (type == Qt::Window){
         qDebug()<<"Window";
+        ui->widget_TitleBar->setHelpVisible(false);
     }
     else if (type == Qt::Dialog){
         qDebug()<<"Dialog";
