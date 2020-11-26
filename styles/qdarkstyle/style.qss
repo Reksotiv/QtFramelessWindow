@@ -56,7 +56,6 @@ See Qt documentation:
   - https://doc.qt.io/qt-5/stylesheet.html
   - https://doc.qt.io/qt-5/stylesheet-reference.html
   - https://doc.qt.io/qt-5/stylesheet-examples.html
-  
 
 --------------------------------------------------------------------------- */
 
@@ -1099,7 +1098,8 @@ QPushButton {
   border: 1px solid #32414B;
   color: #F0F0F0;
   border-radius: 4px;
-  padding: 3px;
+  height:20;
+  width:75;
   outline: none;
   /* Issue #194 - Special case of QPushButton inside dialogs, for better UI */
   min-width: 40px;
@@ -1110,14 +1110,15 @@ QPushButton:disabled {
   border: 1px solid #32414B;
   color: #787878;
   border-radius: 4px;
-  padding: 3px;
+    /* padding: 3px; */
+  padding: 0px;
 }
 
 QPushButton:checked {
   background-color: #32414B;
   border: 1px solid #32414B;
   border-radius: 4px;
-  padding: 3px;
+  padding: 0px;
   outline: none;
 }
 
@@ -1126,7 +1127,7 @@ QPushButton:checked:disabled {
   border: 1px solid #32414B;
   color: #787878;
   border-radius: 4px;
-  padding: 3px;
+  padding: 0px;
   outline: none;
 }
 
