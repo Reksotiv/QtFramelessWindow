@@ -1,3 +1,14 @@
+/*
+###############################################################################
+#                                                                             #
+#                           The MIT License                                   #
+# Copyright (C) 2020 by Reksotiv (hellfire0h@gmail.com)                       #
+#                https://github.com/Reksotiv                                  #
+# Sources code: https://github.com/Reksotiv/QtFramelessWindow                 #
+#                                                                             #
+###############################################################################
+*/
+
 #include "mainwindow.h"
 
 #include <QApplication>
@@ -22,11 +33,11 @@ int main(int argc, char *argv[])
 
     FramelessWindow frameless;
 
-
     MainWindow* w = new MainWindow(&frameless); // ??? parent
-    frameless.SetContent(w);
-    frameless.SetWindowTitle("Frameless Window");
-    frameless.SetWindowIcon(QIcon(":/Images/icon-32.png"));
+
+    frameless.setContent(w);
+    frameless.setWindowTitle("Frameless Window");
+    frameless.setWindowIcon(QIcon(":/Images/icon-32.png"));
 
     frameless.show();
     return a.exec();

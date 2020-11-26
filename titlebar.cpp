@@ -1,4 +1,16 @@
+/*
+###############################################################################
+#                                                                             #
+#                           The MIT License                                   #
+# Copyright (C) 2020 by Reksotiv (hellfire0h@gmail.com)                       #
+#                https://github.com/Reksotiv                                  #
+# Sources code: https://github.com/Reksotiv/QtFramelessWindow                 #
+#                                                                             #
+###############################################################################
+*/
+
 #include "titlebar.h"
+#include "ui_titlebar.h"
 #include <QPainter>
 #include <QStyleOption>
 #include <QMouseEvent>
@@ -8,55 +20,181 @@
 #include <QApplication>
 #include <QMenu>
 
-TitleBar::TitleBar(QWidget *parent) : QWidget(parent)
-{
-    mouse_pressed = false;
 
-    // бля ну это тупо. хз какой способ использовать
-    if (parent->parent()->objectName() == "FramelessWindow"){
-        frameless_window = qobject_cast<FramelessWindow*>(parent->parent());
-    } else {
-        qDebug()<<"cant find object FramelessWindow in titlebar.cpp"<<"\nTitle bar disabled";
-    }
+TitleBar::TitleBar(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::TitleBar)
+{
+    ui->setupUi(this);
+
+    m_mousePressed = false;
+    m_menuEnabled = true;
+
+    m_parent = parent; // parent change
+
     this->setContextMenuPolicy(Qt::DefaultContextMenu);
-    PaintingIcon();
+
+    // create context menu         // жирно, если menu_enabled отключить, то меню всё равно создано
+    m_menu = new QMenu(this);
+    // restore action
+    m_actRestore = new QAction(tr("Restore"), this);    // чекнуть утечку // this menu?
+    m_actRestore->setShortcut(QKeySequence(Qt::ALT + Qt::Key_Enter));
+    connect(m_actRestore, SIGNAL(triggered()), this, SLOT(on_pushButton_Maximize_clicked()));
+    // maximize action
+    m_actMaximize = new QAction(tr("Maximize"), this);
+    m_actMaximize->setShortcut(QKeySequence(Qt::ALT + Qt::Key_Enter));
+    connect(m_actMaximize, SIGNAL(triggered()), this, SLOT(on_pushButton_Maximize_clicked()));
+    if (m_parent->isMaximized()){
+        m_menu->addAction(m_actRestore);
+    } else {
+        m_menu->addAction(m_actMaximize);
+    }
+    // mininize action
+    m_actMinimize = new QAction(tr("Minimize"), this); //= menu.addAction(tr("Minimize"));
+    connect(m_actMinimize, SIGNAL(triggered()), this, SLOT(on_pushButton_Minimize_clicked()));
+    m_menu->addAction(m_actMinimize);
+    // close action
+    m_actClose = new QAction(tr("Close"), this);//, &MainWindow::about);
+    m_actClose->setShortcut(QKeySequence(Qt::ALT + Qt::Key_F4));
+    connect(m_actClose, SIGNAL(triggered()), this, SLOT(on_pushButton_Exit_clicked()));
+    m_menu->addAction(m_actClose);
+
+    // paint actions icons
+    paintingActIcon();
+
+    connect(this, SIGNAL(windowTitleChanged(const QString &)),
+            this, SLOT(setWindowTitle_p(const QString &)));
+    connect(this, SIGNAL(windowIconChanged(const QIcon &)),
+            this, SLOT(setWindowIcon_p(const QIcon &)));
+    updateMenu();
+    QApplication::instance()->installEventFilter(this); //tmp
 }
 
+TitleBar::~TitleBar()
+{
+    delete ui;
+}
+
+void TitleBar::updateMenu()
+{
+
+}
+
+bool TitleBar::eventFilter(QObject *obj, QEvent *event) //tmp
+{
+//    qDebug()<<event;
+    return QWidget::eventFilter(obj, event);
+}
+
+
+void TitleBar::setWindowTitle_p(const QString &title)
+{
+    ui->label_WindowTitle->setText(title);
+}
+
+void TitleBar::setWindowIcon_p(const QIcon &icon)
+{
+    ui->label_WindowIcon->setPixmap(icon.pixmap(16, 16));
+}
+
+
+// help button
+void TitleBar::on_pushButton_Help_clicked()
+{
+
+}
+// minimize button
+void TitleBar::on_pushButton_Minimize_clicked()
+{
+        m_parent->setWindowState(Qt::WindowMinimized);
+}
+// maximize button
+void TitleBar::on_pushButton_Maximize_clicked()
+{
+//    if (maximize_enabled){
+        if (m_parent->isMaximized()){
+            m_parent->setWindowState(Qt::WindowNoState);
+        } else {
+            m_parent->setWindowState(Qt::WindowMaximized);
+        }
+//    }
+}
+// close button
+void TitleBar::on_pushButton_Exit_clicked()
+{
+    m_parent->close();
+}
+
+// visible
+void TitleBar::setHelpVisible(bool visible)
+{
+    ui->pushButton_Help->setVisible(visible);
+}
+void TitleBar::setMinimizeVisible(bool visible)
+{
+    ui->pushButton_Minimize->setVisible(visible);
+    if (visible){
+        m_menu->addAction(m_actMinimize);
+    } else {
+        m_menu->removeAction(m_actMinimize);
+    }
+}
+void TitleBar::setMaximizeVisible(bool visible)
+{
+    ui->pushButton_Maximize->setVisible(visible);
+    if (visible){
+        if (m_parent->isMaximized()){
+            m_menu->addAction(m_actRestore);
+        } else {
+            m_menu->addAction(m_actMaximize);
+        }
+    } else {
+        m_menu->removeAction(m_actMaximize);
+        m_menu->removeAction(m_actRestore);
+    }
+}
+void TitleBar::setCloseVisible(bool visible)
+{
+    ui->pushButton_Exit->setVisible(visible);
+    if (visible){
+        m_menu->addAction(m_actClose);
+    } else {
+        m_menu->removeAction(m_actClose);
+    }
+}
+
+
+// context menu (right click)
 void TitleBar::contextMenuEvent(QContextMenuEvent* e)
 {
-    QMenu menu(this);
-    // restore or maximize button
-    QAction* rest_max;
-    if (frameless_window->isMaximized()){
-        rest_max = new QAction(tr("Restore"), this);
-        rest_max->setIcon(ico_restore);
-        rest_max->setShortcut(QKeySequence(Qt::ALT + Qt::Key_Enter));
-        connect(rest_max, SIGNAL(triggered()), frameless_window, SLOT(on_pushButton_Maximize_clicked()));
-        menu.addAction(rest_max);
-    } else {
-        rest_max = new QAction(tr("Maximize"), this);
-        rest_max->setIcon(ico_maximize);
-        rest_max->setShortcut(QKeySequence(Qt::ALT + Qt::Key_Enter));
-        connect(rest_max, SIGNAL(triggered()), frameless_window, SLOT(on_pushButton_Maximize_clicked()));
-        menu.addAction(rest_max);
+    if (m_menuEnabled){
+        // insert action before minimize(on top)????
+        if (ui->pushButton_Maximize->isVisible()){
+            if (m_parent->isMaximized()){
+                m_menu->insertAction(m_actMinimize, m_actRestore);
+                m_menu->removeAction(m_actMaximize);
+            } else {
+                m_menu->insertAction(m_actMinimize, m_actMaximize);
+                m_menu->removeAction(m_actRestore);
+            }
+        }
+        m_menu->exec(e->globalPos());// QString name, auto widget,
     }
-    // mininize button
-    QAction *minim = new QAction(tr("Minimize"), this); //= menu.addAction(tr("Minimize"));
-    minim->setIcon(ico_minimize);
-    connect(minim, SIGNAL(triggered()), frameless_window, SLOT(on_pushButton_Minimize_clicked()));
-    menu.addAction(minim);
-    // close button
-    QAction *close = new QAction(tr("Close"), this);//, &MainWindow::about);
-    close->setIcon(ico_close);
-    close->setShortcut(QKeySequence(Qt::ALT + Qt::Key_F4));
-    connect(close, SIGNAL(triggered()), frameless_window, SLOT(on_pushButton_Exit_clicked()));
-    menu.addAction(close);
-
-    menu.exec(e->globalPos());
 }
 
+void TitleBar::setContextMenuEnable(bool is_enabled)
+{
+    m_menuEnabled = is_enabled;
+}
+
+QMenu *TitleBar::menu() const
+{
+    return m_menu;
+}
+
+// красит иконку в заданный цвет (в цвет текста для контекст меню)
 //! QPixmap gray-scale image (an alpha map) to colored QIcon
-QIcon TitleBar::PixmapToIcon(QPixmap pixmap, const QColor &color)
+QIcon TitleBar::pixmapToIcon(QPixmap pixmap, const QColor &color)
 {
     // initialize painter to draw on a pixmap and set composition mode
     QPainter painter(&pixmap);
@@ -70,32 +208,24 @@ QIcon TitleBar::PixmapToIcon(QPixmap pixmap, const QColor &color)
     return QIcon(pixmap);
 }
 
-void TitleBar::PaintingIcon()
+
+void TitleBar::paintingActIcon()
 {
+    //QPixmap pixmap = icon.pixmap(icon.actualSize(QSize(32, 32)));
     QColor color = QColor(palette().color(QPalette::WindowText));
-    ico_minimize = PixmapToIcon(QPixmap(":/Images/minimize.png"), color);
-    ico_maximize = PixmapToIcon(QPixmap(":/Images/maximize.png"), color);
-    ico_restore = PixmapToIcon(QPixmap(":/Images/restore.png"), color);
-    ico_close = PixmapToIcon(QPixmap(":/Images/exit.png"), color);
+    m_actRestore->setIcon(pixmapToIcon(QPixmap(":/Images/restore.png"), color));
+    m_actMaximize->setIcon(pixmapToIcon(QPixmap(":/Images/maximize.png"), color));
+    m_actMinimize->setIcon(pixmapToIcon(QPixmap(":/Images/minimize.png"), color));
+    m_actClose->setIcon(pixmapToIcon(QPixmap(":/Images/exit.png"), color));
 }
 
-
-void TitleBar::keyPressEvent(QKeyEvent *event)
-{
-    if (event->modifiers() & Qt::AltModifier){
-        if (event->key() == Qt::Key_Return){
-            emit doubleClicked();
-        }
-    }
-}
 
 void TitleBar::changeEvent(QEvent *event)
 {
     if (event->type() == QEvent::StyleChange){
-        static QColor color;
-        if (color != QColor(palette().color(QPalette::WindowText))){
-            PaintingIcon();
-            color = QColor(palette().color(QPalette::WindowText));
+        if (m_tmpColor != QColor(palette().color(QPalette::WindowText))){
+            paintingActIcon();
+            m_tmpColor = QColor(palette().color(QPalette::WindowText));
         }
     }
     QWidget::changeEvent(event);
@@ -106,75 +236,65 @@ void TitleBar::mouseDoubleClickEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
     if (event->buttons() & Qt::LeftButton){
-        emit doubleClicked();
+        on_pushButton_Maximize_clicked();
     }
-//    if (frameless_window->isMaximized()){
-//        frameless_window->setWindowState(Qt::WindowNoState);
-//    } else {
-//        frameless_window->setWindowState(Qt::WindowMaximized);
-//    }
 }
 
 void TitleBar::mousePressEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
     if (event->buttons() & Qt::LeftButton){
-        press_pos = event->pos();
-        mouse_pressed = true;
-//    } else if (event->buttons() & Qt::RightButton){
-//        emit customContextMenuRequested(event->pos());
+        m_pressPos = event->pos();
+        m_mousePressed = true;
     }
 
-    QWidget::mousePressEvent(event); // ?
+    QWidget::mousePressEvent(event);
 }
 
 void TitleBar::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
     //if (event->buttons() & Qt::LeftButton){
-        mouse_pressed = false;
+        m_mousePressed = false;
     //}
 
-    QWidget::mouseReleaseEvent(event); // ?
+    QWidget::mouseReleaseEvent(event);
 }
 
 void TitleBar::mouseMoveEvent(QMouseEvent *event)
 {
-    if (mouse_pressed)
+    if (m_mousePressed)
     {
-        QCursor cur = cursor(); // faster
-        if (cur == Qt::SizeFDiagCursor || cur == Qt::SizeBDiagCursor || // тупо?
+        QCursor cur = cursor();// тупо?
+        if (cur == Qt::SizeFDiagCursor || cur == Qt::SizeBDiagCursor ||
                 cur == Qt::SizeHorCursor || cur == Qt::SizeVerCursor){
             return;
         }
-        else if (frameless_window->isMaximized()){
-            TryMoveWidget(event);
+        else if (m_parent->isMaximized()){
+            tryMoveWidget(event);
         } else {
-            QPoint diff = event->pos() - press_pos;
-            window()->move(window()->pos() + diff);
+            int margin = m_parent->layout()->margin();       // вынести отдельно для оптимизации?
+            m_parent->move(event->globalPos() - m_pressPos - QPoint(margin, margin));
         }
     }
-    ////QWidget::mouseMoveEvent(event);
+    QWidget::mouseMoveEvent(event);
 }
 
-void TitleBar::TryMoveWidget(QMouseEvent *event)
+void TitleBar::tryMoveWidget(QMouseEvent *event)
 {
-//    QPoint distance = event->globalPos().manhattanLength();
-//    int length = distance.manhattanLength();
-
-    if(event->globalPos().manhattanLength() - press_pos.manhattanLength() > 5 ||
-       event->globalPos().manhattanLength() - press_pos.manhattanLength() < -5)
+    // немного неправильно вычисляется Y
+    if(event->globalPos().manhattanLength() - m_pressPos.manhattanLength() > 5 ||
+       event->globalPos().manhattanLength() - m_pressPos.manhattanLength() < -5)
     {
-        QRect rect = frameless_window->normalGeometry();
-        int dest_x = press_pos.x() * rect.width() / frameless_window->geometry().width();
-        int dest_y = press_pos.y();
+        QRect rect = m_parent->normalGeometry();
+        int dest_x = m_pressPos.x() * rect.width() / m_parent->geometry().width();
+        int dest_y = m_pressPos.y();
         rect.moveTopLeft(event->globalPos() - QPoint(dest_x, dest_y));
 
-        emit doubleClicked();   // пиздец
-        //frameless_window->showNormal();
-        frameless_window->setGeometry(rect);
+        m_parent->showNormal();
+        //m_parent->setGeometry(rect);
 
-        press_pos = QPoint(dest_x, dest_y); // press_pos
+        m_pressPos = QPoint(dest_x, dest_y);
     }
 }
 

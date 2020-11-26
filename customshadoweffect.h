@@ -9,34 +9,20 @@
 ###############################################################################
 */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef CUSTOMSHADOWEFFECT_H
+#define CUSTOMSHADOWEFFECT_H
 
-#include <QMainWindow>
+#include <QGraphicsDropShadowEffect>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
+class CustomShadowEffect : public QGraphicsDropShadowEffect
 {
     Q_OBJECT
-
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit CustomShadowEffect(QObject *parent = 0);
 
-public slots:
-    void testQDialog();
-    void testQDialogButtonBox();
-    void testQTool();
-
-private slots:
-    void on_pushButton_default_clicked();
-    void on_pushButton_white_clicked();
-    void on_pushButton_dark_clicked();
-
-private:
-    Ui::MainWindow *ui;
+protected:
+    QRectF boundingRectFor(const QRectF& rect) const override;
 };
-#endif // MAINWINDOW_H
+
+#endif // CUSTOMSHADOWEFFECT_H

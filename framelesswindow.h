@@ -1,7 +1,19 @@
+/*
+###############################################################################
+#                                                                             #
+#                           The MIT License                                   #
+# Copyright (C) 2020 by Reksotiv (hellfire0h@gmail.com)                       #
+#                https://github.com/Reksotiv                                  #
+# Sources code: https://github.com/Reksotiv/QtFramelessWindow                 #
+#                                                                             #
+###############################################################################
+*/
+
 #ifndef FRAMELESSWINDOW_H
 #define FRAMELESSWINDOW_H
 
 #include <QWidget>
+#include <QMenu>
 
 namespace Ui {
 class FramelessWindow;
@@ -15,52 +27,61 @@ public:
     explicit FramelessWindow(QWidget *parent = nullptr);
     ~FramelessWindow();
 
-    void SetContent(QWidget*);
-    void SetWindowTitle(const QString &title);
-    void SetWindowIcon(const QIcon &icon);
+    void setContent(QWidget *);
+    //void setWindowTitle_FL(const QString &title);   // virtual?
+    //void setWindowIcon_FL(const QIcon &icon);   // virtual?
+
+//    void SetHelpVisible(bool visible);
+//    void SetMinimizeVisible(bool visible);
+//    void SetMaximizeVisible(bool visible);
+//    void SetCloseVisible(bool visible);
+
+//    void SetResizable(bool resizable);
+//    void SetContextMenuEnable(bool is_enabled);
+
+    QMenu *titleBarMenu() const;
 
 private slots:
-    void on_pushButton_Minimize_clicked();
-    void on_pushButton_Maximize_clicked();
-    void on_pushButton_Exit_clicked();
-
-    void on_widget_TitleBar_doubleClicked();
+    void setWindowTitle_p(const QString &title);
+    void setWindowIcon_p(const QIcon &icon);
 
 protected:
-    virtual void mousePressEvent(QMouseEvent *event);
-    virtual void mouseReleaseEvent(QMouseEvent *event);
-
-    virtual bool eventFilter(QObject *obj, QEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    void keyPressEvent(QKeyEvent *event);
+    void changeEvent(QEvent *event);
+    bool eventFilter(QObject *obj, QEvent *event);
 
     virtual void MouseBorderCheck(QMouseEvent *event);
 
-    virtual void changeEvent(QEvent *event);
-
+    virtual void widgetFlagsToTitle(QWidget *widget);
 
 private:
     Ui::FramelessWindow *ui;
 
-    bool LeftBorderHit(const QPoint &pos, int additional_size = 0) const;
-    bool RightBorderHit(const QPoint &pos, int additional_size = 0) const;
-    bool TopBorderHit(const QPoint &pos, int additional_size = 0) const;
-    bool BottomBorderHit(const QPoint &pos, int additional_size = 0) const;
-    const qint8 DRAG_BORDER_SIZE = 5;
+    bool leftBorderHit(const QPoint &pos, int additionalSize = 0) const;
+    bool rightBorderHit(const QPoint &pos, int additionalSize = 0) const;
+    bool topBorderHit(const QPoint &pos, int additionalSize = 0) const;
+    bool bottomBorderHit(const QPoint &pos, int additionalSize = 0) const;
+    const qint8 m_kDragBorderSize = 5;
 
-    void BorderCursorCheck(const QPoint &pos);
-    void BorderDragging(const QPoint &pos);
+    void borderCursorCheck(const QPoint &pos);
+    void borderDragging(const QPoint &pos);
 
-    void SetWindowShadow();
-    void DeleteGraphicEffect();
+    void setWindowShadow();
+    void deleteGraphicEffect();
 
-    QPoint press_pos;
-    QRect press_geometry;
-    //int press_to_right_border;
-    //int press_to_bottom_border;
-    bool mouse_pressed;
-    bool left_drag;
-    bool right_drag;
-    bool top_drag;
-    bool bottom_drag;
+    bool m_minimizeEbabled;
+    bool m_maximizeEnabled;
+
+    QPoint m_pressPos;
+    QRect m_pressGeometry;
+    bool m_mousePressed;
+    bool m_leftDrag;
+    bool m_rightDrag;
+    bool m_topDrag;
+    bool m_bottomDrag;
+    bool m_isResizable;
 };
 
 #endif // FRAMELESSWINDOW_H
